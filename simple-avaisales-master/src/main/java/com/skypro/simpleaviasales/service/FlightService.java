@@ -4,14 +4,13 @@ import com.skypro.simpleaviasales.dto.FilterDTO;
 import com.skypro.simpleaviasales.dto.FlightDTO;
 import com.skypro.simpleaviasales.model.Flight;
 import com.skypro.simpleaviasales.repository.FlightRepository;
-import com.skypro.simpleaviasales.repository.specification.FlightSpecifications;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.skypro.simpleaviasales.repository.specification.FlightSpecifications.byAirline;
+import static com.skypro.simpleaviasales.repository.specification.FlightSpecifications.*;
 
 @Service
 public class FlightService {
@@ -23,12 +22,18 @@ public class FlightService {
     }
 
     public List<FlightDTO> getFlightsFiltered(FilterDTO filterDTO) {
-        List<Flight> flights = flightRepository.findAll(byAirline(filterDTO.getAirlineName()));
+        List<Flight> flights = flightRepository.findAll(Specification.where(
+                byAirline(filterDTO.getAirlineName())
+                        .and(byAirportName(filterDTO.getAirportName()))
+                        .and(byCityName(filterDTO.getCityName()))
+                        .and(byDepartureDate(filterDTO.getDepartureDate()))
+                        .and(byArrivalDate(filterDTO.getArrivalDate()))));
         return flights.stream().map(FlightDTO::from).collect(Collectors.toList());
     }
 
 
-    public Flight getFlightById(Long id) {
-        return null;
+    public FlightDTO getFlightById(String flightNumber) {
+        Flight flight = flightRepository.findByFlightNumber(flightNumber).orElseThrow(RuntimeException::new);
+        return FlightDTO.from(flight);
     }
 }
